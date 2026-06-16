@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlab Starter Kit — Four apps to remix</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  @font-face {
+    font-family: "Vollkorn";
+    src: url("fonts/Vollkorn-VariableFont_wght.ttf") format("truetype-variations");
+    font-weight: 400 700; font-style: normal; font-display: swap;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--background);
+    color: var(--text1);
+    --card-pad: var(--space-2xl);
+    --stack-gap: var(--space-2xl);
+    --embed-min: 440px;
+  }
+
+  .wrap { max-width: var(--w-marketing); margin: 0 auto; padding: 0 var(--space-2xl); }
+  @media (max-width: 680px) { .wrap { padding: 0 var(--space-md); } }
+
+  /* ---------- top chrome ---------- */
+  .chrome {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .chrome__logo { height: 22px; display: block; }
+  .logo-dark { display: none; }
+  [data-theme="dark"] .logo-light { display: none; }
+  [data-theme="dark"] .logo-dark { display: block; }
+  .chrome__tag { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
+
+  /* ---------- intro ---------- */
+  .intro { padding: var(--section-y-sm) 0 var(--space-2xl); max-width: 780px; }
+  .eyebrow { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin: 0 0 var(--space-lg); }
+  .intro h1 { font-size: var(--text-display); font-weight: 700; line-height: 1.06; letter-spacing: -0.024em; margin: 0 0 var(--space-lg); text-wrap: balance; }
+  .intro p { font-size: var(--text-subheading); line-height: 1.5; color: var(--text2); margin: 0; max-width: 660px; text-wrap: pretty; }
+  .intro strong { font-weight: 400; color: var(--text1); }
+  .mark { background: var(--highlighter); color: var(--on-highlighter); padding: 0 0.16em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .intro__steps { display: flex; flex-wrap: wrap; gap: var(--space-lg) var(--space-2xl); margin-top: var(--space-2xl); padding-top: var(--space-xl); border-top: 1px solid var(--border); }
+  .istep { display: flex; align-items: baseline; gap: var(--space-sm); font-size: var(--text-body-sm); color: var(--text2); }
+  .istep b { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; color: var(--text3); }
+
+  /* ---------- picker ---------- */
+  .picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-lg); padding-bottom: var(--stack-gap); }
+  @media (max-width: 900px) { .picker { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .picker { grid-template-columns: 1fr; } }
+
+  .mini {
+    appearance: none; text-align: left; cursor: pointer; font: inherit; color: var(--text1);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-surface);
+    padding: var(--space-xl); display: flex; flex-direction: column; gap: var(--space-sm);
+    min-height: 184px;
+    transition: border-color var(--dur-fast) var(--ease-fast), background var(--dur-fast) var(--ease-fast), transform var(--dur-fast) var(--ease-fast);
+  }
+  .mini:hover { border-color: var(--hairline); }
+  .mini:active { transform: translateY(1px); }
+  .mini__top { display: flex; align-items: center; gap: var(--space-sm); }
+  .mini__idx { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.04em; color: var(--text4); }
+  .mini__cat { font-family: var(--font-body); font-size: var(--text-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); }
+  .mini__name { font-size: var(--text-subheading); font-weight: 600; letter-spacing: -0.008em; line-height: 1.18; margin-top: var(--space-2xs); }
+  .mini__who { font-size: var(--text-body-sm); color: var(--text2); line-height: 1.45; flex: 1 1 auto; }
+  .mini__cue { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-top: var(--space-xs); }
+  .mini__cue .ic { width: 14px; height: 14px; transition: transform var(--dur-medium) var(--ease-medium); }
+  .mini[aria-expanded="true"] { background: var(--highlighter); color: var(--on-highlighter); border-color: var(--on-highlighter); }
+  .mini[aria-expanded="true"] .mini__idx,
+  .mini[aria-expanded="true"] .mini__cat,
+  .mini[aria-expanded="true"] .mini__who,
+  .mini[aria-expanded="true"] .mini__cue { color: var(--on-highlighter); }
+  .mini[aria-expanded="true"] .mini__cue .ic { transform: rotate(90deg); }
+
+  /* skeleton loader */
+  .mini--skel { pointer-events: none; }
+  .mini--skel::after {
+    content: ''; display: block; flex: 1;
+    background: linear-gradient(90deg, var(--surface1) 25%, var(--border) 50%, var(--surface1) 75%);
+    background-size: 200% 100%;
+    border-radius: var(--r-control);
+    animation: shimmer 1.4s infinite;
+  }
+  @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+  /* error state */
+  .picker-error {
+    grid-column: 1 / -1;
+    padding: var(--space-2xl); text-align: center;
+    font-size: var(--text-body-sm); color: var(--text3);
+    border: 1px dashed var(--border); border-radius: var(--r-surface);
+  }
+  .picker-error b { display: block; color: var(--text2); margin-bottom: var(--space-sm); }
+
+  /* ---------- modal ---------- */
+  .modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-2xl) var(--space-lg); overflow-y: auto; }
+  .modal[hidden] { display: none; }
+  .modal__scrim { position: fixed; inset: 0; background: var(--scrim); }
+  .modal__dialog { position: relative; z-index: 1; width: min(1060px, 100%); margin: auto; background: var(--overlay); border-radius: var(--r-container); box-shadow: var(--shadow-3); overflow: hidden; }
+  .modal .app-card { border: 0 !important; box-shadow: none !important; border-radius: 0; }
+  .modal .app-card__head { padding-right: 76px; }
+  .modal__close {
+    position: absolute; top: var(--space-lg); right: var(--space-lg); z-index: 5;
+    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--outline); border-radius: var(--r-control);
+    background: var(--surface2); color: var(--text1); cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-fast);
+  }
+  .modal__close:hover { background: var(--surface1); }
+  .modal__close .ic { width: 18px; height: 18px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .modal[data-open="true"] .modal__scrim { animation: scrimin var(--dur-medium) var(--ease-fast); }
+    .modal[data-open="true"] .modal__dialog { animation: dialogin var(--dur-medium) var(--ease-slow); }
+  }
+  @keyframes scrimin { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dialogin { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: none; } }
+
+  /* ---------- app card ---------- */
+  main { display: block; }
+  .app-card { display: none; background: var(--surface2); border: 1px solid var(--outline); border-radius: var(--r-surface); overflow: hidden; }
+  .app-card.is-open { display: block; }
+  .app-card__head {
+    display: flex; align-items: flex-start; gap: var(--space-lg);
+    padding: var(--card-pad) var(--card-pad) var(--space-xl);
+    border-bottom: 1px solid var(--hairline); flex-wrap: wrap;
+  }
+  .app-card__idx { font-family: var(--font-mono); font-size: var(--text-heading); font-weight: 400; letter-spacing: -0.01em; color: var(--text4); white-space: nowrap; line-height: 1; padding-top: 2px; }
+  .app-card__titles { flex: 1 1 280px; min-width: 0; }
+  .app-card__cat { display: inline-block; font-family: var(--font-body); font-size: var(--text-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); margin: 0 0 var(--space-sm); }
+  .app-card__name { font-size: var(--text-heading); font-weight: 600; line-height: 1.18; letter-spacing: -0.014em; margin: 0 0 var(--space-sm); }
+  .app-card__tag { font-size: var(--text-body); color: var(--text2); margin: 0; line-height: 1.5; max-width: 52ch; }
+  .app-card__actions { display: flex; gap: var(--space-sm); flex: 0 0 auto; align-items: center; }
+
+  /* buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-body); font-size: var(--text-body-sm); font-weight: 600;
+    line-height: 1; white-space: nowrap; cursor: pointer;
+    padding: 10px 15px; border-radius: var(--r-control);
+    border: 1px solid var(--outline); background: var(--surface2); color: var(--text1);
+    text-decoration: none;
+    transition: background var(--dur-fast) var(--ease-fast), transform var(--dur-fast) var(--ease-fast);
+  }
+  .btn:hover { background: var(--surface1); }
+  .btn:active { transform: translateY(1px); }
+  .btn .ic { width: 16px; height: 16px; }
+  .btn--remix { background: var(--highlighter); color: var(--on-highlighter); border-color: var(--on-highlighter); }
+  .btn--remix:hover { background: var(--highlighter); filter: brightness(0.96); }
+
+  .app-card__body { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr); }
+  @media (max-width: 860px) { .app-card__body { grid-template-columns: 1fr; } }
+
+  /* ---------- embed ---------- */
+  .embed { padding: var(--card-pad); border-right: 1px solid var(--hairline); }
+  @media (max-width: 860px) { .embed { border-right: none; border-bottom: 1px solid var(--hairline); } }
+  .embed__frame { border: 1px solid var(--hairline); border-radius: var(--r-surface); background: var(--surface1); min-height: var(--embed-min); overflow: hidden; display: flex; flex-direction: column; }
+  .embed__bar { display: flex; align-items: center; gap: var(--space-sm); padding: 9px var(--space-md); border-bottom: 1px solid var(--hairline); background: var(--surface2); }
+  .embed__dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--hairline); flex: 0 0 auto; }
+  .embed__url { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.04em; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .embed__live { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--success); display: none; flex: 0 0 auto; }
+  .embed__stage { flex: 1 1 auto; position: relative; min-height: 0; }
+  .embed__stage iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--surface2); }
+  .embed__ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--space-2xl) var(--space-xl); gap: var(--space-md); }
+  .embed__ph-mark { width: 40px; height: 40px; opacity: 0.18; }
+  [data-theme="dark"] .embed__ph-mark { filter: invert(1); opacity: 0.3; }
+  .embed__ph h4 { font-size: var(--text-subheading); font-weight: 600; margin: 0; letter-spacing: -0.008em; }
+  .embed__ph p { font-size: var(--text-body-sm); color: var(--text3); margin: 0; max-width: 320px; line-height: 1.5; }
+  .embed__form { display: flex; gap: var(--space-sm); width: 100%; max-width: 380px; margin-top: var(--space-xs); }
+  .embed__form input { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: var(--text-body-sm); padding: 9px 12px; border: 1px solid var(--outline); border-radius: var(--r-control); background: var(--surface2); color: var(--text1); }
+  .embed__form input::placeholder { color: var(--text4); }
+  .embed__form input:focus { outline: none; box-shadow: 0 0 0 3px var(--highlighter); }
+  .embed__form button { flex: 0 0 auto; cursor: pointer; font-family: var(--font-body); font-size: var(--text-body-sm); font-weight: 600; padding: 9px 14px; border-radius: var(--r-control); border: 1px solid var(--outline); background: var(--outline); color: var(--ink-inverse); }
+  [data-theme="dark"] .embed__form button { color: var(--background); }
+  .embed__hint { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.04em; color: var(--text4); }
+
+  /* ---------- fields ---------- */
+  .fields { padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--space-xl); }
+  .field__label { display: flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: var(--text-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); margin: 0 0 var(--space-md); }
+  .ic { display: inline-block; width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+  .ic--sparkle { fill: currentColor; stroke: none; }
+  .field__label .ic { width: 18px; height: 18px; color: var(--text1); }
+  .field p { font-size: var(--text-body); line-height: 1.55; color: var(--text1); margin: 0; }
+  .tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+  .tag { font-family: var(--font-body); font-size: var(--text-meta); font-weight: 500; padding: 4px 11px; border-radius: var(--r-pill); border: 1px solid var(--hairline); color: var(--text1); background: var(--surface1); }
+  ul.do { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm) var(--space-lg); }
+  @media (max-width: 520px) { ul.do { grid-template-columns: 1fr; } }
+  ul.do li { display: flex; gap: 9px; align-items: flex-start; font-size: var(--text-body-sm); line-height: 1.45; color: var(--text1); }
+  ul.do li .ic { width: 17px; height: 17px; color: var(--text2); margin-top: 1px; }
+  ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; gap: var(--space-md); }
+  ol.steps li { display: flex; gap: var(--space-md); align-items: flex-start; font-size: var(--text-body); line-height: 1.45; color: var(--text1); counter-increment: step; }
+  ol.steps li::before { content: counter(step, decimal-leading-zero); font-family: var(--font-mono); font-size: var(--text-meta); font-weight: 500; color: var(--text3); flex: 0 0 auto; border: 1px solid var(--hairline); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; line-height: 1; padding-right: 1px; }
+  .field--deeper { border-top: 1px solid var(--border); padding-top: var(--space-xl); }
+  .deeper { display: flex; gap: var(--space-md); align-items: flex-start; }
+  .deeper__body { flex: 1 1 auto; }
+  .deeper__body p { color: var(--text2); margin: 0 0 var(--space-md); }
+  .link-arrow { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: var(--text-body-sm); color: var(--text1); text-decoration: none; border-bottom: 2px solid var(--highlighter); padding-bottom: 1px; }
+  .link-arrow:hover { color: var(--text1); }
+  .link-arrow .ic { width: 16px; height: 16px; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--hairline); padding: var(--space-2xl) 0 var(--section-y-sm); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); }
+  footer p { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin: 0; }
+
+  @media print {
+    .embed__form, .app-card__actions { display: none !important; }
+    .app-card { break-inside: avoid; border: 1px solid #000 !important; box-shadow: none !important; }
+  }
+</style>
+</head>
+<body data-layout="split" data-frame="framed" data-density="regular" data-accent="on">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"></path><circle cx="9" cy="7.5" r="3.5"></circle><path d="M16 4.2a3.5 3.5 0 0 1 0 6.6"></path><path d="M22 20v-1.5a4 4 0 0 0-3-3.85"></path></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5c.5 4.4 1.6 5.5 6 6-4.4.5-5.5 1.6-6 6-.5-4.4-1.6-5.5-6-6 4.4-.5 5.5-1.6 6-6z"></path></symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 4.5h12.5l-2.2 4 2.2 4H5"></path></symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M16.2 7.8 10.8 10.8 7.8 16.2 13.2 13.2z"></path></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6.5 9.5 17 4 11.5"></path></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.2"></rect><path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2 2v.5"></path></symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4.5 12h15"></path><path d="M13 5.5 19.5 12 13 18.5"></path></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6 18 18"></path><path d="M18 6 6 18"></path></symbol>
+    </defs>
+  </svg>
+
+  <div class="wrap">
+    <header class="chrome">
+      <img class="chrome__logo logo-light" src="assets/logo/Playlab_Logo_Full_Black.svg" alt="Playlab">
+      <img class="chrome__logo logo-dark" src="assets/logo/Playlab_Logo_Full_Paper.svg" alt="Playlab">
+      <span class="chrome__tag">Starter Kit · v1</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">Playlab Starter Kit</p>
+      <h1>Four apps to get your school started.</h1>
+      <p>A small set you can <strong>use today</strong> and <span class="mark">remix tomorrow</span>. Each app works out of the box — open it, try it with a real task from your week, then make a copy and shape it to your school.</p>
+      <div class="intro__steps">
+        <span class="istep"><b>01</b> Open an app and try it live</span>
+        <span class="istep"><b>02</b> Run it on a real task</span>
+        <span class="istep"><b>03</b> Remix your own copy</span>
+      </div>
+    </section>
+
+    <!-- Picker buttons are rendered here by JS -->
+    <nav class="picker" id="picker" aria-label="Choose an app">
+      <div class="mini mini--skel" aria-hidden="true"></div>
+      <div class="mini mini--skel" aria-hidden="true"></div>
+      <div class="mini mini--skel" aria-hidden="true"></div>
+      <div class="mini mini--skel" aria-hidden="true"></div>
+    </nav>
+
+    <div class="modal" id="appModal" data-open="false" hidden>
+      <div class="modal__scrim" data-close></div>
+      <div class="modal__dialog" role="dialog" aria-modal="true" aria-label="App details">
+        <button class="modal__close" type="button" data-close aria-label="Close">
+          <svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg>
+        </button>
+        <!-- App cards are rendered here by JS -->
+        <main id="appCards"></main>
+      </div>
+    </div>
+
+    <footer>
+      <p>Playlab Starter Kit</p>
+      <p>Use it · Remix it · Make it yours</p>
+    </footer>
+  </div>
+
+  <script>
+    // ── Config ────────────────────────────────────────────────────────────────
+    // Fill these in once your Worker is deployed and your Notion DB is created.
+    var NOTION_PROXY = 'https://YOUR_WORKER.workers.dev';
+    var DATABASE_ID  = 'YOUR_DATABASE_ID';
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    // ── Notion data ───────────────────────────────────────────────────────────
+    function getPlainText(prop) {
+      if (!prop) return '';
+      var arr = prop.title || prop.rich_text || [];
+      return arr.map(function(b) { return b.plain_text || ''; }).join('');
+    }
+
+    function parseApp(result, idx) {
+      var p = result.properties;
+      var capabilities = getPlainText(p['Capabilities']).split('\n').filter(Boolean);
+      var steps        = getPlainText(p['Steps']).split('\n').filter(Boolean);
+      var tags         = getPlainText(p['Audience Tags']).split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+
+      return {
+        index:        idx + 1,
+        name:         getPlainText(p['Name']),
+        category:     getPlainText(p['Category']),
+        tagline:      getPlainText(p['Tagline']),
+        slug:         getPlainText(p['Slug']),
+        whoItIsFor:   getPlainText(p["Who It's For"]),
+        audienceTags: tags,
+        capabilities: capabilities,
+        steps:        steps,
+        goDeeperText: getPlainText(p['Go Deeper Text']),
+        remixUrl:     p['Remix URL'] && p['Remix URL'].url || '#',
+        embedUrl:     p['Embed URL'] && p['Embed URL'].url || null,
+      };
+    }
+
+    async function fetchApps() {
+      var res = await fetch(NOTION_PROXY + '/v1/databases/' + DATABASE_ID + '/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sorts: [{ property: 'Order', direction: 'ascending' }],
+          filter: { property: 'Published', checkbox: { equals: true } },
+        }),
+      });
+      if (!res.ok) throw new Error('Notion responded ' + res.status);
+      var data = await res.json();
+      return data.results.map(parseApp);
+    }
+
+    // ── Rendering ─────────────────────────────────────────────────────────────
+    function renderMini(app) {
+      return `<button class="mini" type="button" data-app="${app.index}"
+                aria-controls="app-${app.index}" aria-expanded="false">
+        <span class="mini__top">
+          <span class="mini__idx">${pad(app.index)}</span>
+          <span class="mini__cat">${esc(app.category)}</span>
+        </span>
+        <span class="mini__name">${esc(app.name)}</span>
+        <span class="mini__who">${esc(app.whoItIsFor)}</span>
+        <span class="mini__cue">
+          <span>View app</span>
+          <svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+        </span>
+      </button>`;
+    }
+
+    function renderCard(app) {
+      var capItems = app.capabilities.map(function(c) {
+        return `<li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>${esc(c)}</li>`;
+      }).join('');
+
+      var stepItems = app.steps.map(function(s) {
+        return `<li>${esc(s)}</li>`;
+      }).join('');
+
+      var tagChips = app.audienceTags.map(function(t) {
+        return `<span class="tag">${esc(t)}</span>`;
+      }).join('');
+
+      return `<article class="app-card" id="app-${app.index}" data-embed-key="${esc(app.slug)}">
+        <div class="app-card__head">
+          <span class="app-card__idx">${pad(app.index)}</span>
+          <div class="app-card__titles">
+            <span class="app-card__cat">${esc(app.category)}</span>
+            <h2 class="app-card__name">${esc(app.name)}</h2>
+            <p class="app-card__tag">${esc(app.tagline)}</p>
+          </div>
+          <div class="app-card__actions">
+            <a class="btn btn--remix" href="${esc(app.remixUrl)}" target="_blank" rel="noopener">
+              <svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg>Remix this app
+            </a>
+          </div>
+        </div>
+        <div class="app-card__body">
+          <div class="embed">
+            <div class="embed__frame">
+              <div class="embed__bar">
+                <span class="embed__dot"></span>
+                <span class="embed__url" data-embed-url>playlab.ai / ${esc(app.slug)}</span>
+                <span class="embed__live">● Live</span>
+              </div>
+              <div class="embed__stage">
+                <div class="embed__ph">
+                  <img class="embed__ph-mark" src="assets/logo/Playlab_Logo-Loop_Black.svg" alt="">
+                  <h4>Embed the live app</h4>
+                  <p>Paste the app's Playlab share link to embed it right here in the card.</p>
+                  <form class="embed__form" data-embed-form>
+                    <input type="url" placeholder="https://playlab.ai/projects/…" aria-label="Playlab share link">
+                    <button type="submit">Embed</button>
+                  </form>
+                  <span class="embed__hint">or set Embed URL in Notion</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fields">
+            <div class="field">
+              <p class="field__label">
+                <svg class="ic" aria-hidden="true"><use href="#i-users"></use></svg>Who it's for
+              </p>
+              <p>${esc(app.whoItIsFor)}</p>
+              ${tagChips ? `<div class="tags" style="margin-top: var(--space-md);">${tagChips}</div>` : ''}
+            </div>
+            ${capItems ? `<div class="field">
+              <p class="field__label">
+                <svg class="ic ic--sparkle" aria-hidden="true"><use href="#i-sparkle"></use></svg>What you can do with it
+              </p>
+              <ul class="do">${capItems}</ul>
+            </div>` : ''}
+            ${stepItems ? `<div class="field">
+              <p class="field__label">
+                <svg class="ic" aria-hidden="true"><use href="#i-flag"></use></svg>How to get started
+              </p>
+              <ol class="steps">${stepItems}</ol>
+            </div>` : ''}
+            ${app.goDeeperText ? `<div class="field field--deeper">
+              <div class="deeper">
+                <div class="deeper__body">
+                  <p class="field__label">
+                    <svg class="ic" aria-hidden="true"><use href="#i-compass"></use></svg>Want to go deeper?
+                  </p>
+                  <p>${esc(app.goDeeperText)}</p>
+                  <a class="link-arrow" href="${esc(app.remixUrl)}" target="_blank" rel="noopener">
+                    Make it yours<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg>
+                  </a>
+                </div>
+              </div>
+            </div>` : ''}
+          </div>
+        </div>
+      </article>`;
+    }
+
+    function renderApps(apps) {
+      var picker   = document.getElementById('picker');
+      var appCards = document.getElementById('appCards');
+      picker.innerHTML   = apps.map(renderMini).join('');
+      appCards.innerHTML = apps.map(renderCard).join('');
+    }
+
+    function showPickerError(message) {
+      var picker = document.getElementById('picker');
+      picker.innerHTML = `<div class="picker-error">
+        <b>Couldn't load apps</b>${esc(message)}
+      </div>`;
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────────────────
+    function initModal() {
+      var modal = document.getElementById('appModal');
+
+      function openModal(n) {
+        document.querySelectorAll('.mini').forEach(function(m) {
+          m.setAttribute('aria-expanded', m.getAttribute('data-app') === String(n) ? 'true' : 'false');
+        });
+        document.querySelectorAll('.app-card').forEach(function(p) {
+          p.classList.toggle('is-open', p.id === 'app-' + n);
+        });
+        modal.hidden = false;
+        void modal.offsetWidth;
+        modal.setAttribute('data-open', 'true');
+        document.body.style.overflow = 'hidden';
+        var c = modal.querySelector('.modal__close');
+        if (c) c.focus();
+      }
+
+      function closeModal() {
+        modal.setAttribute('data-open', 'false');
+        modal.hidden = true;
+        document.body.style.overflow = '';
+        document.querySelectorAll('.mini').forEach(function(m) { m.setAttribute('aria-expanded', 'false'); });
+        document.querySelectorAll('.app-card').forEach(function(p) { p.classList.remove('is-open'); });
+      }
+
+      // Event delegation — works with dynamically-rendered buttons
+      document.getElementById('picker').addEventListener('click', function(e) {
+        var btn = e.target.closest('.mini[data-app]');
+        if (btn) openModal(btn.getAttribute('data-app'));
+      });
+
+      modal.querySelectorAll('[data-close]').forEach(function(el) {
+        el.addEventListener('click', closeModal);
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !modal.hidden) closeModal();
+      });
+    }
+
+    // ── Embed wiring ──────────────────────────────────────────────────────────
+    function loadEmbed(card, url) {
+      var stage = card.querySelector('.embed__stage');
+      var bar   = card.querySelector('.embed__bar');
+      if (!stage || !url) return;
+      stage.innerHTML = '';
+      var f = document.createElement('iframe');
+      f.src = url;
+      f.setAttribute('loading', 'lazy');
+      f.setAttribute('allow', 'clipboard-write; microphone');
+      f.title = (card.querySelector('.app-card__name') || {}).textContent || 'Playlab app';
+      stage.appendChild(f);
+      var live  = bar && bar.querySelector('.embed__live');
+      var urlEl = bar && bar.querySelector('[data-embed-url]');
+      if (live) live.style.display = 'inline';
+      try { if (urlEl) urlEl.textContent = new URL(url).host + new URL(url).pathname; } catch (e) {}
+    }
+
+    function initEmbeds(apps) {
+      document.querySelectorAll('.app-card').forEach(function(card) {
+        var key    = 'plk-embed:' + (card.getAttribute('data-embed-key') || '');
+        var appIdx = parseInt(card.id.replace('app-', ''), 10) - 1;
+        var preset = apps[appIdx] && apps[appIdx].embedUrl;
+        var saved  = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        if (preset || saved) loadEmbed(card, preset || saved);
+
+        var form = card.querySelector('[data-embed-form]');
+        if (form) {
+          form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var input = form.querySelector('input');
+            var url   = (input.value || '').trim();
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            try { localStorage.setItem(key, url); } catch (e2) {}
+            loadEmbed(card, url);
+          });
+        }
+      });
+    }
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    fetchApps().then(function(apps) {
+      renderApps(apps);
+      initModal();
+      initEmbeds(apps);
+    }).catch(function(err) {
+      console.error(err);
+      showPickerError('Check your Worker URL and Database ID in the page config.');
+    });
+  </script>
+
+</body>
+</html>

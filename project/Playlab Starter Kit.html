@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlab Starter Kit — Four apps to remix</title>
+<link rel="stylesheet" href="colors_and_type.css">
+<style>
+  /* Re-declare brand font at HTML level (CSS loads fonts/ relative to itself) */
+  @font-face {
+    font-family: "Vollkorn";
+    src: url("fonts/Vollkorn-VariableFont_wght.ttf") format("truetype-variations");
+    font-weight: 400 700; font-style: normal; font-display: swap;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--background);
+    color: var(--text1);
+    --card-pad: var(--space-2xl);
+    --stack-gap: var(--space-2xl);
+    --embed-min: 440px;
+  }
+  body[data-density="compact"] { --card-pad: var(--space-xl); --stack-gap: var(--space-xl); --embed-min: 380px; }
+  body[data-density="comfy"]   { --card-pad: var(--space-3xl); --stack-gap: var(--space-3xl); --embed-min: 520px; }
+
+  .wrap { max-width: var(--w-marketing); margin: 0 auto; padding: 0 var(--space-2xl); }
+  @media (max-width: 680px) { .wrap { padding: 0 var(--space-md); } }
+
+  /* ---------- top chrome ---------- */
+  .chrome {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .chrome__logo { height: 22px; display: block; }
+  .logo-dark { display: none; }
+  [data-theme="dark"] .logo-light { display: none; }
+  [data-theme="dark"] .logo-dark { display: block; }
+  .chrome__tag { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
+
+  /* ---------- intro ---------- */
+  .intro { padding: var(--section-y-sm) 0 var(--space-2xl); max-width: 780px; }
+  .eyebrow { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin: 0 0 var(--space-lg); }
+  .intro h1 { font-size: var(--text-display); font-weight: 700; line-height: 1.06; letter-spacing: -0.024em; margin: 0 0 var(--space-lg); text-wrap: balance; }
+  .intro p { font-size: var(--text-subheading); line-height: 1.5; color: var(--text2); margin: 0; max-width: 660px; text-wrap: pretty; }
+  .intro strong { font-weight: 400; color: var(--text1); }
+  .mark { background: var(--highlighter); color: var(--on-highlighter); padding: 0 0.16em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  .intro__steps { display: flex; flex-wrap: wrap; gap: var(--space-lg) var(--space-2xl); margin-top: var(--space-2xl); padding-top: var(--space-xl); border-top: 1px solid var(--border); }
+  .istep { display: flex; align-items: baseline; gap: var(--space-sm); font-size: var(--text-body-sm); color: var(--text2); }
+  .istep b { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; color: var(--text3); }
+
+  /* ---------- app cards ---------- */
+  /* ---------- compact picker array ---------- */
+  .picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-lg); padding-bottom: var(--stack-gap); }
+  @media (max-width: 900px) { .picker { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .picker { grid-template-columns: 1fr; } }
+
+  .mini {
+    appearance: none; text-align: left; cursor: pointer; font: inherit; color: var(--text1);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-surface);
+    padding: var(--space-xl); display: flex; flex-direction: column; gap: var(--space-sm);
+    min-height: 184px;
+    transition: border-color var(--dur-fast) var(--ease-fast), background var(--dur-fast) var(--ease-fast), transform var(--dur-fast) var(--ease-fast);
+  }
+  .mini:hover { border-color: var(--hairline); }
+  .mini:active { transform: translateY(1px); }
+  .mini__top { display: flex; align-items: center; gap: var(--space-sm); }
+  .mini__idx { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.04em; color: var(--text4); }
+  .mini__cat { font-family: var(--font-body); font-size: var(--text-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); }
+  .mini__name { font-size: var(--text-subheading); font-weight: 600; letter-spacing: -0.008em; line-height: 1.18; margin-top: var(--space-2xs); }
+  .mini__who { font-size: var(--text-body-sm); color: var(--text2); line-height: 1.45; flex: 1 1 auto; }
+  .mini__cue { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin-top: var(--space-xs); }
+  .mini__cue .ic { width: 14px; height: 14px; transition: transform var(--dur-medium) var(--ease-medium); }
+
+  /* selected mini = the one highlighter mark per view */
+  .mini[aria-expanded="true"] { background: var(--highlighter); color: var(--on-highlighter); border-color: var(--on-highlighter); }
+  .mini[aria-expanded="true"] .mini__idx,
+  .mini[aria-expanded="true"] .mini__cat,
+  .mini[aria-expanded="true"] .mini__who,
+  .mini[aria-expanded="true"] .mini__cue { color: var(--on-highlighter); }
+  .mini[aria-expanded="true"] .mini__cue .ic { transform: rotate(90deg); }
+  body[data-accent="off"] .mini[aria-expanded="true"] { background: var(--surface2); color: var(--text1); border-color: var(--outline); }
+  body[data-accent="off"] .mini[aria-expanded="true"] .mini__idx { color: var(--text4); }
+  body[data-accent="off"] .mini[aria-expanded="true"] .mini__cat,
+  body[data-accent="off"] .mini[aria-expanded="true"] .mini__who,
+  body[data-accent="off"] .mini[aria-expanded="true"] .mini__cue { color: var(--text2); }
+
+  main { display: block; }
+  .app-card {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--outline);
+    border-radius: var(--r-surface);
+    overflow: hidden;
+  }
+  .app-card.is-open { display: block; }
+  body[data-frame="quiet"] .app-card { border-color: transparent; box-shadow: 0 0 0 1px var(--border); }
+
+  /* ---------- modal / popover ---------- */
+  .modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-start; justify-content: center; padding: var(--space-2xl) var(--space-lg); overflow-y: auto; }
+  .modal[hidden] { display: none; }
+  .modal__scrim { position: fixed; inset: 0; background: var(--scrim); }
+  .modal__dialog { position: relative; z-index: 1; width: min(1060px, 100%); margin: auto; background: var(--overlay); border-radius: var(--r-container); box-shadow: var(--shadow-3); overflow: hidden; }
+  .modal .app-card { border: 0 !important; box-shadow: none !important; border-radius: 0; }
+  .modal .app-card__head { padding-right: 76px; }
+  .modal__close {
+    position: absolute; top: var(--space-lg); right: var(--space-lg); z-index: 5;
+    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--outline); border-radius: var(--r-control);
+    background: var(--surface2); color: var(--text1); cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-fast);
+  }
+  .modal__close:hover { background: var(--surface1); }
+  .modal__close .ic { width: 18px; height: 18px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .modal[data-open="true"] .modal__scrim { animation: scrimin var(--dur-medium) var(--ease-fast); }
+    .modal[data-open="true"] .modal__dialog { animation: dialogin var(--dur-medium) var(--ease-slow); }
+  }
+  @keyframes scrimin { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dialogin { from { opacity: 0; transform: translateY(12px) scale(0.99); } to { opacity: 1; transform: none; } }
+
+  .app-card__head {
+    display: flex; align-items: flex-start; gap: var(--space-lg);
+    padding: var(--card-pad) var(--card-pad) var(--space-xl);
+    border-bottom: 1px solid var(--hairline);
+    flex-wrap: wrap;
+  }
+  .app-card__idx {
+    font-family: var(--font-mono); font-size: var(--text-heading); font-weight: 400;
+    letter-spacing: -0.01em; color: var(--text4);
+    white-space: nowrap; line-height: 1; padding-top: 2px;
+  }
+  .app-card__titles { flex: 1 1 280px; min-width: 0; }
+  .app-card__cat { display: inline-block; font-family: var(--font-body); font-size: var(--text-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2); margin: 0 0 var(--space-sm); }
+  .app-card__name { font-size: var(--text-heading); font-weight: 600; line-height: 1.18; letter-spacing: -0.014em; margin: 0 0 var(--space-sm); }
+  .app-card__tag { font-size: var(--text-body); color: var(--text2); margin: 0; line-height: 1.5; max-width: 52ch; }
+  .app-card__actions { display: flex; gap: var(--space-sm); flex: 0 0 auto; align-items: center; }
+
+  /* buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--font-body); font-size: var(--text-body-sm); font-weight: 600;
+    line-height: 1; white-space: nowrap; cursor: pointer;
+    padding: 10px 15px; border-radius: var(--r-control);
+    border: 1px solid var(--outline); background: var(--surface2); color: var(--text1);
+    text-decoration: none;
+    transition: background var(--dur-fast) var(--ease-fast), transform var(--dur-fast) var(--ease-fast);
+  }
+  .btn:hover { background: var(--surface1); }
+  .btn:active { transform: translateY(1px); }
+  .btn .ic { width: 16px; height: 16px; }
+  .btn--remix { background: var(--highlighter); color: var(--on-highlighter); border-color: var(--on-highlighter); }
+  .btn--remix:hover { background: var(--highlighter); filter: brightness(0.96); }
+  body[data-accent="off"] .btn--remix { background: var(--surface2); color: var(--text1); border-color: var(--outline); }
+  body[data-accent="off"] .btn--remix:hover { background: var(--surface1); filter: none; }
+
+  .app-card__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+  }
+  body[data-layout="stacked"] .app-card__body { grid-template-columns: 1fr; }
+  @media (max-width: 860px) { .app-card__body { grid-template-columns: 1fr; } }
+
+  /* ---------- embed ---------- */
+  .embed { padding: var(--card-pad); border-right: 1px solid var(--hairline); }
+  body[data-layout="stacked"] .embed { border-right: none; border-bottom: 1px solid var(--hairline); }
+  @media (max-width: 860px) { .embed { border-right: none; border-bottom: 1px solid var(--hairline); } }
+
+  .embed__frame {
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-surface);
+    background: var(--surface1);
+    min-height: var(--embed-min);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .embed__bar {
+    display: flex; align-items: center; gap: var(--space-sm);
+    padding: 9px var(--space-md);
+    border-bottom: 1px solid var(--hairline);
+    background: var(--surface2);
+  }
+  .embed__dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--hairline); flex: 0 0 auto; }
+  .embed__url { flex: 1 1 auto; min-width: 0; font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.04em; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .embed__live { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--success); display: none; flex: 0 0 auto; }
+
+  .embed__stage { flex: 1 1 auto; position: relative; min-height: 0; }
+  .embed__stage iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--surface2); }
+
+  .embed__ph {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: var(--space-2xl) var(--space-xl); gap: var(--space-md);
+  }
+  .embed__ph-mark { width: 40px; height: 40px; opacity: 0.18; }
+  [data-theme="dark"] .embed__ph-mark { filter: invert(1); opacity: 0.3; }
+  .embed__ph h4 { font-size: var(--text-subheading); font-weight: 600; margin: 0; letter-spacing: -0.008em; }
+  .embed__ph p { font-size: var(--text-body-sm); color: var(--text3); margin: 0; max-width: 320px; line-height: 1.5; }
+  .embed__form { display: flex; gap: var(--space-sm); width: 100%; max-width: 380px; margin-top: var(--space-xs); }
+  .embed__form input {
+    flex: 1 1 auto; min-width: 0;
+    font-family: var(--font-mono); font-size: var(--text-body-sm);
+    padding: 9px 12px; border: 1px solid var(--outline); border-radius: var(--r-control);
+    background: var(--surface2); color: var(--text1);
+  }
+  .embed__form input::placeholder { color: var(--text4); }
+  .embed__form input:focus { outline: none; box-shadow: 0 0 0 3px var(--highlighter); }
+  .embed__form button {
+    flex: 0 0 auto; cursor: pointer;
+    font-family: var(--font-body); font-size: var(--text-body-sm); font-weight: 600;
+    padding: 9px 14px; border-radius: var(--r-control);
+    border: 1px solid var(--outline); background: var(--outline); color: var(--ink-inverse);
+  }
+  [data-theme="dark"] .embed__form button { color: var(--background); }
+  .embed__hint { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.04em; color: var(--text4); }
+
+  /* ---------- fields ---------- */
+  .fields { padding: var(--card-pad); display: flex; flex-direction: column; gap: var(--space-xl); }
+  body[data-layout="stacked"] .fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xl) var(--space-2xl); }
+  @media (max-width: 760px) { body[data-layout="stacked"] .fields { grid-template-columns: 1fr; } }
+
+  .field__label {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-body); font-size: var(--text-label); font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--text2);
+    margin: 0 0 var(--space-md);
+  }
+  /* inline-svg icons */
+  .ic { display: inline-block; width: 18px; height: 18px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vertical-align: middle; }
+  .ic--sparkle { fill: currentColor; stroke: none; }
+  .field__label .ic { width: 18px; height: 18px; color: var(--text1); }
+
+  .field p { font-size: var(--text-body); line-height: 1.55; color: var(--text1); margin: 0; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+  .tag {
+    font-family: var(--font-body); font-size: var(--text-meta); font-weight: 500;
+    padding: 4px 11px; border-radius: var(--r-pill);
+    border: 1px solid var(--hairline); color: var(--text1); background: var(--surface1);
+  }
+
+  ul.do { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm) var(--space-lg); }
+  @media (max-width: 520px) { ul.do { grid-template-columns: 1fr; } }
+  ul.do li { display: flex; gap: 9px; align-items: flex-start; font-size: var(--text-body-sm); line-height: 1.45; color: var(--text1); }
+  ul.do li .ic { width: 17px; height: 17px; color: var(--text2); margin-top: 1px; }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; gap: var(--space-md); }
+  ol.steps li { display: flex; gap: var(--space-md); align-items: flex-start; font-size: var(--text-body); line-height: 1.45; color: var(--text1); counter-increment: step; }
+  ol.steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--font-mono); font-size: var(--text-meta); font-weight: 500;
+    color: var(--text3); flex: 0 0 auto;
+    border: 1px solid var(--hairline); border-radius: 50%;
+    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+    line-height: 1; padding-right: 1px;
+  }
+
+  .field--deeper { border-top: 1px solid var(--border); padding-top: var(--space-xl); }
+  .deeper { display: flex; gap: var(--space-md); align-items: flex-start; }
+  .deeper__body { flex: 1 1 auto; }
+  .deeper__body p { color: var(--text2); margin: 0 0 var(--space-md); }
+  .link-arrow { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: var(--text-body-sm); color: var(--text1); text-decoration: none; border-bottom: 2px solid var(--highlighter); padding-bottom: 1px; }
+  body[data-accent="off"] .link-arrow { border-bottom-color: var(--text1); }
+  .link-arrow:hover { color: var(--text1); }
+  .link-arrow .ic { width: 16px; height: 16px; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--hairline); padding: var(--space-2xl) 0 var(--section-y-sm); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-md); }
+  footer p { font-family: var(--font-mono); font-size: var(--text-chrome); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); margin: 0; }
+
+  @media print {
+    .embed__form, .app-card__actions { display: none !important; }
+    .app-card { break-inside: avoid; border: 1px solid #000 !important; box-shadow: none !important; }
+  }
+</style>
+</head>
+<body data-layout="split" data-frame="framed" data-density="regular" data-accent="on">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V20"></path><circle cx="9" cy="7.5" r="3.5"></circle><path d="M16 4.2a3.5 3.5 0 0 1 0 6.6"></path><path d="M22 20v-1.5a4 4 0 0 0-3-3.85"></path></symbol>
+      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 2.5c.5 4.4 1.6 5.5 6 6-4.4.5-5.5 1.6-6 6-.5-4.4-1.6-5.5-6-6 4.4-.5 5.5-1.6 6-6z"></path></symbol>
+      <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 4.5h12.5l-2.2 4 2.2 4H5"></path></symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M16.2 7.8 10.8 10.8 7.8 16.2 13.2 13.2z"></path></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6.5 9.5 17 4 11.5"></path></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.2"></rect><path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"></path></symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4.5 12h15"></path><path d="M13 5.5 19.5 12 13 18.5"></path></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6 18 18"></path><path d="M18 6 6 18"></path></symbol>
+    </defs>
+  </svg>
+
+  <div class="wrap">
+    <header class="chrome">
+      <img class="chrome__logo logo-light" src="assets/logo/Playlab_Logo_Full_Black.svg" alt="Playlab">
+      <img class="chrome__logo logo-dark" src="assets/logo/Playlab_Logo_Full_Paper.svg" alt="Playlab">
+      <span class="chrome__tag">Starter Kit · v1</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">Playlab Starter Kit</p>
+      <h1>Four apps to get your school started.</h1>
+      <p>A small set you can <strong>use today</strong> and <span class="mark">remix tomorrow</span>. Each app works out of the box — open it, try it with a real task from your week, then make a copy and shape it to your school.</p>
+      <div class="intro__steps">
+        <span class="istep"><b>01</b> Open an app and try it live</span>
+        <span class="istep"><b>02</b> Run it on a real task</span>
+        <span class="istep"><b>03</b> Remix your own copy</span>
+      </div>
+    </section>
+
+    <nav class="picker" aria-label="Choose an app">
+      <button class="mini" type="button" data-app="1" aria-controls="app-1" aria-expanded="false">
+        <span class="mini__top"><span class="mini__idx">01</span><span class="mini__cat">For teachers</span></span>
+        <span class="mini__name">Lesson Co-Planner</span>
+        <span class="mini__who">For K–12 classroom teachers short on planning time.</span>
+        <span class="mini__cue"><span>View app</span><svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></span>
+      </button>
+      <button class="mini" type="button" data-app="2" aria-controls="app-2" aria-expanded="false">
+        <span class="mini__top"><span class="mini__idx">02</span><span class="mini__cat">For students</span></span>
+        <span class="mini__name">Socratic Study Buddy</span>
+        <span class="mini__who">For students working on their own, and the teachers guiding them.</span>
+        <span class="mini__cue"><span>View app</span><svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></span>
+      </button>
+      <button class="mini" type="button" data-app="3" aria-controls="app-3" aria-expanded="false">
+        <span class="mini__top"><span class="mini__idx">03</span><span class="mini__cat">Teachers &amp; office</span></span>
+        <span class="mini__name">Family Message Studio</span>
+        <span class="mini__who">For anyone who writes home and wants it to sound human.</span>
+        <span class="mini__cue"><span>View app</span><svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></span>
+      </button>
+      <button class="mini" type="button" data-app="4" aria-controls="app-4" aria-expanded="false">
+        <span class="mini__top"><span class="mini__idx">04</span><span class="mini__cat">Teachers &amp; coaches</span></span>
+        <span class="mini__name">Rubric Builder</span>
+        <span class="mini__who">For teachers and coaches building assessments and norming feedback.</span>
+        <span class="mini__cue"><span>View app</span><svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></span>
+      </button>
+    </nav>
+
+    <div class="modal" id="appModal" data-open="false" hidden>
+      <div class="modal__scrim" data-close></div>
+      <div class="modal__dialog" role="dialog" aria-modal="true" aria-label="App details">
+        <button class="modal__close" type="button" data-close aria-label="Close"><svg class="ic" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        <main>
+
+      <!-- ============ APP 01 ============ -->
+      <article class="app-card" id="app-1" data-screen-label="App 01" data-embed-key="lesson-co-planner">
+        <div class="app-card__head">
+          <span class="app-card__idx">01</span>
+          <div class="app-card__titles">
+            <span class="app-card__cat">For Teachers</span>
+            <h2 class="app-card__name">Lesson Co-Planner</h2>
+            <p class="app-card__tag">Turn a topic and a time slot into a ready-to-teach lesson — hooks, activities, and exit tickets included.</p>
+          </div>
+          <div class="app-card__actions">
+            <a class="btn btn--remix" href="#" data-remix><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg>Remix this app</a>
+          </div>
+        </div>
+        <div class="app-card__body">
+          <div class="embed">
+            <div class="embed__frame">
+              <div class="embed__bar">
+                <span class="embed__dot"></span>
+                <span class="embed__url" data-embed-url>playlab.ai / lesson-co-planner</span>
+                <span class="embed__live">● Live</span>
+              </div>
+              <div class="embed__stage">
+                <div class="embed__ph">
+                  <img class="embed__ph-mark" src="assets/logo/Playlab_Logo-Loop_Black.svg" alt="">
+                  <h4>Embed the live app</h4>
+                  <p>Paste the app's Playlab share link to embed it right here in the card.</p>
+                  <form class="embed__form" data-embed-form>
+                    <input type="url" placeholder="https://playlab.ai/projects/…" aria-label="Playlab share link">
+                    <button type="submit">Embed</button>
+                  </form>
+                  <span class="embed__hint">or set data-embed-src in the source</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fields">
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-users"></use></svg>Who it's for</p>
+              <p>K–12 classroom teachers in any subject — especially anyone short on planning time who still wants a lesson that holds together.</p>
+              <div class="tags" style="margin-top: var(--space-md);">
+                <span class="tag">New teachers</span>
+                <span class="tag">Substitutes</span>
+                <span class="tag">Any subject</span>
+              </div>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic ic--sparkle" aria-hidden="true"><use href="#i-sparkle"></use></svg>What you can do with it</p>
+              <ul class="do">
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Draft a full lesson from a standard or topic</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Generate hooks, activities, and exit tickets</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Differentiate for different reading levels</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Build a materials list in seconds</li>
+              </ul>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-flag"></use></svg>How to get started</p>
+              <ol class="steps">
+                <li>Tell it your grade, subject, and topic.</li>
+                <li>Pick how long the class period is.</li>
+                <li>Ask for tweaks until it fits your room.</li>
+              </ol>
+            </div>
+            <div class="field field--deeper">
+              <div class="deeper">
+                <div class="deeper__body">
+                  <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-compass"></use></svg>Want to go deeper?</p>
+                  <p>Remix it with your district's standards and pacing guide so every plan lands on-curriculum from the first draft.</p>
+                  <a class="link-arrow" href="#" data-remix>Make it yours<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============ APP 02 ============ -->
+      <article class="app-card" id="app-2" data-screen-label="App 02" data-embed-key="socratic-study-buddy">
+        <div class="app-card__head">
+          <span class="app-card__idx">02</span>
+          <div class="app-card__titles">
+            <span class="app-card__cat">For Students</span>
+            <h2 class="app-card__name">Socratic Study Buddy</h2>
+            <p class="app-card__tag">A tutor that asks the right questions instead of handing over the answer.</p>
+          </div>
+          <div class="app-card__actions">
+            <a class="btn btn--remix" href="#" data-remix><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg>Remix this app</a>
+          </div>
+        </div>
+        <div class="app-card__body">
+          <div class="embed">
+            <div class="embed__frame">
+              <div class="embed__bar">
+                <span class="embed__dot"></span>
+                <span class="embed__url" data-embed-url>playlab.ai / socratic-study-buddy</span>
+                <span class="embed__live">● Live</span>
+              </div>
+              <div class="embed__stage">
+                <div class="embed__ph">
+                  <img class="embed__ph-mark" src="assets/logo/Playlab_Logo-Loop_Black.svg" alt="">
+                  <h4>Embed the live app</h4>
+                  <p>Paste the app's Playlab share link to embed it right here in the card.</p>
+                  <form class="embed__form" data-embed-form>
+                    <input type="url" placeholder="https://playlab.ai/projects/…" aria-label="Playlab share link">
+                    <button type="submit">Embed</button>
+                  </form>
+                  <span class="embed__hint">or set data-embed-src in the source</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fields">
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-users"></use></svg>Who it's for</p>
+              <p>Students working on their own — and the teachers who want guided practice that builds understanding instead of giving the answer away.</p>
+              <div class="tags" style="margin-top: var(--space-md);">
+                <span class="tag">Independent study</span>
+                <span class="tag">Homework help</span>
+                <span class="tag">Test prep</span>
+              </div>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic ic--sparkle" aria-hidden="true"><use href="#i-sparkle"></use></svg>What you can do with it</p>
+              <ul class="do">
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Work through a problem step by step</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Get hints, not finished solutions</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Check understanding with follow-ups</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Practice explaining your thinking</li>
+              </ul>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-flag"></use></svg>How to get started</p>
+              <ol class="steps">
+                <li>Paste a problem or name a topic.</li>
+                <li>Try an answer, even a rough one.</li>
+                <li>Let the buddy nudge you to the next step.</li>
+              </ol>
+            </div>
+            <div class="field field--deeper">
+              <div class="deeper">
+                <div class="deeper__body">
+                  <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-compass"></use></svg>Want to go deeper?</p>
+                  <p>Remix it with your unit's vocabulary and texts so it coaches students in your classroom's language.</p>
+                  <a class="link-arrow" href="#" data-remix>Make it yours<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============ APP 03 ============ -->
+      <article class="app-card" id="app-3" data-screen-label="App 03" data-embed-key="family-message-studio">
+        <div class="app-card__head">
+          <span class="app-card__idx">03</span>
+          <div class="app-card__titles">
+            <span class="app-card__cat">For Teachers &amp; Front Office</span>
+            <h2 class="app-card__name">Family Message Studio</h2>
+            <p class="app-card__tag">Quick notes in; warm, clear messages home out — in any family's language.</p>
+          </div>
+          <div class="app-card__actions">
+            <a class="btn btn--remix" href="#" data-remix><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg>Remix this app</a>
+          </div>
+        </div>
+        <div class="app-card__body">
+          <div class="embed">
+            <div class="embed__frame">
+              <div class="embed__bar">
+                <span class="embed__dot"></span>
+                <span class="embed__url" data-embed-url>playlab.ai / family-message-studio</span>
+                <span class="embed__live">● Live</span>
+              </div>
+              <div class="embed__stage">
+                <div class="embed__ph">
+                  <img class="embed__ph-mark" src="assets/logo/Playlab_Logo-Loop_Black.svg" alt="">
+                  <h4>Embed the live app</h4>
+                  <p>Paste the app's Playlab share link to embed it right here in the card.</p>
+                  <form class="embed__form" data-embed-form>
+                    <input type="url" placeholder="https://playlab.ai/projects/…" aria-label="Playlab share link">
+                    <button type="submit">Embed</button>
+                  </form>
+                  <span class="embed__hint">or set data-embed-src in the source</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fields">
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-users"></use></svg>Who it's for</p>
+              <p>Teachers, counselors, and office staff who write home often and want every message to sound human, clear, and kind.</p>
+              <div class="tags" style="margin-top: var(--space-md);">
+                <span class="tag">Home communication</span>
+                <span class="tag">Translation</span>
+                <span class="tag">Front office</span>
+              </div>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic ic--sparkle" aria-hidden="true"><use href="#i-sparkle"></use></svg>What you can do with it</p>
+              <ul class="do">
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Turn bullet points into a friendly note</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Match a warm, professional school voice</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Translate into families' home languages</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Draft reminders and tough conversations</li>
+              </ul>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-flag"></use></svg>How to get started</p>
+              <ol class="steps">
+                <li>Jot the gist in a few words.</li>
+                <li>Choose a tone and who it's going to.</li>
+                <li>Review, translate, and send.</li>
+              </ol>
+            </div>
+            <div class="field field--deeper">
+              <div class="deeper">
+                <div class="deeper__body">
+                  <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-compass"></use></svg>Want to go deeper?</p>
+                  <p>Remix it with your school's voice, signature, and the languages your families actually speak.</p>
+                  <a class="link-arrow" href="#" data-remix>Make it yours<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- ============ APP 04 ============ -->
+      <article class="app-card" id="app-4" data-screen-label="App 04" data-embed-key="rubric-builder">
+        <div class="app-card__head">
+          <span class="app-card__idx">04</span>
+          <div class="app-card__titles">
+            <span class="app-card__cat">For Teachers &amp; Coaches</span>
+            <h2 class="app-card__name">Rubric Builder</h2>
+            <p class="app-card__tag">Describe an assignment; get a clear rubric and feedback you can stand behind.</p>
+          </div>
+          <div class="app-card__actions">
+            <a class="btn btn--remix" href="#" data-remix><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg>Remix this app</a>
+          </div>
+        </div>
+        <div class="app-card__body">
+          <div class="embed">
+            <div class="embed__frame">
+              <div class="embed__bar">
+                <span class="embed__dot"></span>
+                <span class="embed__url" data-embed-url>playlab.ai / rubric-builder</span>
+                <span class="embed__live">● Live</span>
+              </div>
+              <div class="embed__stage">
+                <div class="embed__ph">
+                  <img class="embed__ph-mark" src="assets/logo/Playlab_Logo-Loop_Black.svg" alt="">
+                  <h4>Embed the live app</h4>
+                  <p>Paste the app's Playlab share link to embed it right here in the card.</p>
+                  <form class="embed__form" data-embed-form>
+                    <input type="url" placeholder="https://playlab.ai/projects/…" aria-label="Playlab share link">
+                    <button type="submit">Embed</button>
+                  </form>
+                  <span class="embed__hint">or set data-embed-src in the source</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fields">
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-users"></use></svg>Who it's for</p>
+              <p>Teachers and instructional coaches building assessments and norming feedback so a grade means the same thing across a team.</p>
+              <div class="tags" style="margin-top: var(--space-md);">
+                <span class="tag">Assessment</span>
+                <span class="tag">Coaching</span>
+                <span class="tag">Grade norming</span>
+              </div>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic ic--sparkle" aria-hidden="true"><use href="#i-sparkle"></use></svg>What you can do with it</p>
+              <ul class="do">
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Generate a rubric from any assignment</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Write criteria in student-friendly words</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Draft feedback aligned to each level</li>
+                <li><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg>Norm grading across a team</li>
+              </ul>
+            </div>
+            <div class="field">
+              <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-flag"></use></svg>How to get started</p>
+              <ol class="steps">
+                <li>Describe the assignment and what you value.</li>
+                <li>Choose how many levels you want.</li>
+                <li>Edit the criteria to match your bar.</li>
+              </ol>
+            </div>
+            <div class="field field--deeper">
+              <div class="deeper">
+                <div class="deeper__body">
+                  <p class="field__label"><svg class="ic" aria-hidden="true"><use href="#i-compass"></use></svg>Want to go deeper?</p>
+                  <p>Remix it to lock in your grading scale and the exact language your team already uses.</p>
+                  <a class="link-arrow" href="#" data-remix>Make it yours<svg class="ic" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+        </main>
+      </div>
+    </div>
+
+    <footer>
+      <p>Playlab Starter Kit</p>
+      <p>Use it · Remix it · Make it yours</p>
+    </footer>
+  </div>
+
+  <div id="tweaks-root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <!-- ---------- picker: compact array → open app in a popover ---------- -->
+  <script>
+    (function () {
+      var minis = Array.prototype.slice.call(document.querySelectorAll('.mini'));
+      var panels = Array.prototype.slice.call(document.querySelectorAll('.app-card'));
+      var modal = document.getElementById('appModal');
+      function openModal(n) {
+        minis.forEach(function (m) {
+          m.setAttribute('aria-expanded', m.getAttribute('data-app') === String(n) ? 'true' : 'false');
+        });
+        panels.forEach(function (p) {
+          p.classList.toggle('is-open', p.id === 'app-' + n);
+        });
+        modal.hidden = false;
+        void modal.offsetWidth; // reflow so the entry animation runs
+        modal.setAttribute('data-open', 'true');
+        document.body.style.overflow = 'hidden';
+        var c = modal.querySelector('.modal__close');
+        if (c) c.focus();
+      }
+      function closeModal() {
+        modal.setAttribute('data-open', 'false');
+        modal.hidden = true;
+        document.body.style.overflow = '';
+        minis.forEach(function (m) { m.setAttribute('aria-expanded', 'false'); });
+        panels.forEach(function (p) { p.classList.remove('is-open'); });
+      }
+      minis.forEach(function (m) {
+        m.addEventListener('click', function () { openModal(m.getAttribute('data-app')); });
+      });
+      Array.prototype.slice.call(modal.querySelectorAll('[data-close]')).forEach(function (el) {
+        el.addEventListener('click', closeModal);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.hidden) closeModal();
+      });
+    })();
+  </script>
+
+  <!-- ---------- embed wiring (vanilla, persistent) ---------- -->
+  <script>
+    (function () {
+      function loadEmbed(card, url) {
+        var stage = card.querySelector('.embed__stage');
+        var bar = card.querySelector('.embed__bar');
+        if (!stage || !url) return;
+        stage.innerHTML = '';
+        var f = document.createElement('iframe');
+        f.src = url;
+        f.setAttribute('loading', 'lazy');
+        f.setAttribute('allow', 'clipboard-write; microphone');
+        f.title = (card.querySelector('.app-card__name') || {}).textContent || 'Playlab app';
+        stage.appendChild(f);
+        var live = bar && bar.querySelector('.embed__live');
+        if (live) live.style.display = 'inline';
+        var urlEl = bar && bar.querySelector('[data-embed-url]');
+        try {
+          if (urlEl) urlEl.textContent = new URL(url).host + new URL(url).pathname;
+        } catch (e) {}
+      }
+
+      document.querySelectorAll('.app-card').forEach(function (card) {
+        var key = 'plk-embed:' + (card.getAttribute('data-embed-key') || '');
+        var preset = card.getAttribute('data-embed-src');
+        var saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        var initial = preset || saved;
+        if (initial) loadEmbed(card, initial);
+
+        var form = card.querySelector('[data-embed-form]');
+        if (form) {
+          form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var input = form.querySelector('input');
+            var url = (input.value || '').trim();
+            if (!url) return;
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            try { localStorage.setItem(key, url); } catch (e2) {}
+            loadEmbed(card, url);
+          });
+        }
+      });
+    })();
+  </script>
+
+  <!-- ---------- tweaks island ---------- -->
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "layout": "split",
+      "frame": "framed",
+      "density": "regular",
+      "accent": "on",
+      "dark": false
+    }/*EDITMODE-END*/;
+
+    function StarterKitTweaks() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+      React.useEffect(() => {
+        document.documentElement.setAttribute('data-theme', t.dark ? 'dark' : 'light');
+        document.body.setAttribute('data-layout', t.layout);
+        document.body.setAttribute('data-frame', t.frame);
+        document.body.setAttribute('data-density', t.density);
+        document.body.setAttribute('data-accent', t.accent);
+      }, [t]);
+
+      return (
+        <TweaksPanel title="Tweaks">
+          <TweakSection label="Layout" />
+          <TweakRadio label="Card layout" value={t.layout}
+                      options={[{value:'split',label:'Split'},{value:'stacked',label:'Stacked'}]}
+                      onChange={(v) => setTweak('layout', v)} />
+          <TweakRadio label="Density" value={t.density}
+                      options={[{value:'compact',label:'Compact'},{value:'regular',label:'Regular'},{value:'comfy',label:'Comfy'}]}
+                      onChange={(v) => setTweak('density', v)} />
+          <TweakSection label="Style" />
+          <TweakRadio label="Card frame" value={t.frame}
+                      options={[{value:'framed',label:'Framed'},{value:'quiet',label:'Quiet'}]}
+                      onChange={(v) => setTweak('frame', v)} />
+          <TweakRadio label="Highlighter" value={t.accent}
+                      options={[{value:'on',label:'On'},{value:'off',label:'Off'}]}
+                      onChange={(v) => setTweak('accent', v)} />
+          <TweakToggle label="Dark mode" value={t.dark}
+                       onChange={(v) => setTweak('dark', v)} />
+        </TweaksPanel>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<StarterKitTweaks />);
+  </script>
+
+</body>
+</html>
